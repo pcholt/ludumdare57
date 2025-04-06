@@ -7,9 +7,10 @@ player={
     inventory={[19]=190, [20]=100, [36]=100, [52]=10},
     equipment={},
     cash=0,
+    o2=1,
+    power = 100,
 }
 display={
-    o2=100,
     closest=100,
 }
 particles={}
@@ -28,7 +29,7 @@ constructions={
     {name="power pack", buy=700, make={[20]=100, [52]=100}},
 }
 
-s_playing=1 s_title=2 s_interior=3 s_playing_disable_interior=4
+s_playing=1 s_title=2 s_interior=3 s_playing_disable_interior=4 s_gameover=5
 state=s_playing
 
 fraction_depth_bitmasks={
@@ -59,11 +60,28 @@ function _draw()
     elseif state==s_interior then
         camera(0)
         draw_interior()
+    elseif state==s_gameover then
+        camera(0)
+        cls(0)
+        print("game over", 50, 30, 7)
+        print("press z to restart", 30, 50, 7)
+        if btnp(4) then
+            player.x = 100
+            player.y = 8
+            player.o2 = 100
+            player.inventory = {[19]=190, [20]=100, [36]=100, [52]=10}
+            player.equipment = {}
+            player.cash = 0
+            player.power = 100
+            state = s_playing
+        end
     end
 end
 
 function draw_interior()
     cls(13)
+    player.o2 = 100
+    player.power = 100
     local i=0 c=0 m={}
     for t,amt in pairs(player.inventory) do
         m[i] = t
@@ -187,8 +205,10 @@ end
 
 function draw_display()
     camera(0)
-    print("\#1   "..display.closest, 0, 2, 7)
+    print("\#1   "..flr(player.o2), 0, 2, 7)
     spr(1, 0,0)
+    rectfill(64, 1, 64+player.power/3, 8, 8)
+    rect(64, 1, 64+player.power/3, 8, 7)
 end
 
 function vacant(x,y)
@@ -243,7 +263,11 @@ function _update()
         player.x,player.y = x,y
 
         if player.o2 > 0 and y>16 then
-            player.o2 = player.o2 - (player.y-6)/2000
+            if player.equipment["tank upgrade"] then
+                player.o2 = player.o2 - (player.y-6)/2000
+            else
+                player.o2 = player.o2 - (player.y-6)/500
+            end
         end
         if player.y < 16 then
             player.o2 = player.o2 + 2
@@ -276,9 +300,21 @@ function _update()
         disable_player_interior = true
     end
 
+    if player.o2 <= 0 then
+        state = s_gameover
+    end
+
 end
 
 function mine(closest)
+    if player.power <= 0 then
+        return
+    end
+    if player.equipment["power pack"] then
+        player.power -= 0.2
+    else
+        player.power -= 1
+    end
     local t = mget(closest.x, closest.y) -- Get the tile
 
     -- increment the amount of resources in the player inventory for the tile
