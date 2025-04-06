@@ -53,8 +53,9 @@ function _draw()
     if state==s_title then
         camera(0)
         cls(0)
-        print("\^w\^tdepths", 50, 30, 7)
-        print("press 🅾️ to start", 30, 50, 7)
+        print("\^w\^tdistressing", 20, 30, 7)
+        print("\^w\^tdepths", 40, 45, 7)
+        print("press 🅾️ to start", 30, 70, 7)
         if btnp(4) then
             player.x = 100
             player.y = 8
