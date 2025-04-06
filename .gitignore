@@ -17,3 +17,6 @@ Thumbs.db
 *.tar.gz
 index.html
 *.js
+
+# Ignore anything in the binaries directory
+depths.bin/*
