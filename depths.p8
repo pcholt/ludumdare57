@@ -4,7 +4,8 @@ __lua__
 player={
 	x=100, y=8, o2=100, n2={0,0,0,0}, flip_hor=false,
     flip_vert=false, base_sprite=5,
-    inventory={},
+    inventory={[19]=190, [20]=100, [36]=100, [52]=10},
+    equipment={},
     cash=0,
 }
 display={
@@ -13,10 +14,22 @@ display={
 }
 particles={}
 depth_colors={12,13,5,1,0}
+ui_selected=1
+recipes={
+    [19]={name="fibre", price=1},
+    [20]={name="iron", price=2},
+    [36]={name="gold", price=3},
+    [52]={name="electrum", price=40},
+}
+constructions={
+    {name="tank upgrade", make={[20]=100}, buy=20},
+    {name="improved fins", buy=2000},
+    {name="fish gun", buy=300, make={[19]=100, [20]=1}},
+    {name="power pack", buy=700, make={[20]=100, [52]=100}},
+}
 
 s_playing=1 s_title=2 s_interior=3 s_playing_disable_interior=4
 state=s_playing
-state=s_interior
 
 fraction_depth_bitmasks={
     0b0000000000000000,
@@ -51,18 +64,117 @@ end
 
 function draw_interior()
     cls(13)
-    print("craft", 40, 5, 7) -- Display a message
-    local i=0
+    local i=0 c=0 m={}
     for t,amt in pairs(player.inventory) do
+        m[i] = t
         if amt > 0 then
-            print("     "..amt, 0, 20 + i*10, 7) -- Display the item and amount
-            spr(t, 10, 18 + i*10) -- Display the item
+            print(amt, 20, 5 + i*10, 7) -- Display the item and amount
+            if (ui_selected == i) color=7 else color=1 
+            print("sell", 40, 5 + i*10, color) -- Display a message
+            spr(t, 10, 3 + i*10) -- Display the item
             i+=1
         end
     end
-    print("     "..player.cash, 0, 20 + i*10, 7) -- Display the item and amount
-    spr(27, 10, 18 + i*10) -- Display the item
+    spr(27, 80, 5)
+    print(player.cash, 90, 7, 7)
     i+=1
+
+    r=30
+    local button={}
+    for ci,construction in pairs(constructions) do
+        local purchasable = true
+        if player.equipment[construction.name] then
+            color=11
+            purchasable = false
+        else
+            color=0
+        end 
+        print(construction.name, 10, 20 + r, color) -- Display the item and amount
+        if purchasable then
+            if (ui_selected == i) color=7 else color=1
+            if construction.buy then
+                if player.cash >= construction.buy and color==1 then
+                    color=11
+                end
+                print("buy $"..construction.buy, 80, 20 + r, color) -- Display the item and amount
+                button[i] = {item=ci, mode="buy"}
+                r+=8
+            end
+            if construction.make then
+                i+=1
+                if (ui_selected == i) color=7 else color=1 
+                x0 = 13
+                for k,v in pairs(construction.make) do
+                    spr(k, x0, 18 + r) -- Display the item
+                    x0 += 8
+                    x0 = print("X"..v, x0, 20 + r, 7)+4 -- Display the item and amount
+                end
+                local match = true
+                for k,v in pairs(construction.make) do
+                    if not player.inventory[k] or player.inventory[k] < v then
+                        match = false
+                    end
+                end
+                if match and color==1 then
+                    color=11
+                end
+                print("build", 80, 20 + r, color) -- Display the item and amount
+                button[i] = {item=ci, mode="build"}
+                r+=8
+            end
+            r+=5
+            i+=1
+        else
+            r+=10
+        end
+    end
+
+    if btnp(2) then
+        ui_selected = (ui_selected - 1) % i
+    end
+    if btnp(3) then
+        ui_selected = (ui_selected + 1) % i
+    end
+
+    if btn(4) then
+        local item = m[ui_selected]
+
+        -- sell
+        if m and player.inventory[item] and player.inventory[item]>0 then
+            price = recipes[item].price
+            player.cash += price -- Sell one item
+            player.inventory[item] -= 1 -- Remove the item from the inventory
+            if player.inventory[item] <= 0 then
+                ui_selected = -1
+            end
+        end
+
+        -- make or buy
+        if button[ui_selected] then
+            local item = button[ui_selected].item
+            local mode = button[ui_selected].mode
+
+            if mode == "buy" then
+                local construction = constructions[item]
+                if player.cash >= construction.buy then
+                    player.cash -= construction.buy
+                    player.equipment[construction.name] = true
+                end
+            elseif mode == "build" then
+                local buildable = true
+                local construction = constructions[item]
+                for k,v in pairs(construction.make) do
+                    if (not player.inventory[k] or player.inventory[k] < v) buildable = false
+                end
+                if buildable then
+                    for k,v in pairs(construction.make) do
+                        player.inventory[k] -= v
+                    end
+                    player.equipment[construction.name] = true
+                end
+            end
+        end
+    end
 end
 
 function draw_particles()
@@ -150,7 +262,10 @@ function _update()
 
         --if the player is collided with tile 3 then the player is in the interior
         if mget(flr((player.x+4)/8), flr((4+player.y)/8)) == 3 then
-            if (not disable_player_interior) state = s_interior
+            if (not disable_player_interior) then
+                state = s_interior
+                ui_selected = 1
+            end
         else
             disable_player_interior = false
         end
