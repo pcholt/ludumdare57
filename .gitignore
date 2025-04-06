@@ -1,0 +1,17 @@
+# Ignore system files
+.DS_Store
+Thumbs.db
+
+# Ignore Pico-8 backup files
+*.p8.bak
+
+# Ignore compiled cartridge files
+*.p8.png
+
+# Ignore temporary files
+*.tmp
+*.log
+
+# Ignore other unnecessary files
+*.zip
+*.tar.gz
