@@ -12,6 +12,11 @@ display={
 }
 particles={}
 depth_colors={12,13,5,1,0}
+
+s_playing=1 s_title=2 s_interior=3 s_playing_disable_interior=4
+state=s_playing
+state=s_interior
+
 fraction_depth_bitmasks={
     0b0000000000000000,
     0b0000000100000000,
@@ -30,12 +35,29 @@ fraction_depth_bitmasks={
 
 function _draw()
     cls()
-    draw_borders()
-    draw_depth_overlay()
-    map()
-    draw_player()
-    draw_particles()
-    draw_display()
+    if state==s_playing then
+        draw_borders()
+        draw_depth_overlay()
+        map()
+        draw_player()
+        draw_particles()
+        draw_display()
+    elseif state==s_interior then
+        camera(0)
+        draw_interior()
+    end
+end
+    
+function draw_interior()
+    cls(13)
+    print("interior view", 40, 10, 7) -- Display a message
+    local i=0
+    for t,amt in pairs(player.inventory) do
+        if amt > 0 then
+            print("item "..t.." x"..amt, 0, 30 + i*8, 7) -- Display the item and amount
+            i+=1
+        end
+    end
 end
     
 function draw_particles()
@@ -60,70 +82,94 @@ function _update()
     local x,y = player.x, player.y
     local speed = 2
 
-    if not btn(2) and vacant(x,y+8) and vacant(x+7,y+8) and y<16 then
-        player.standing = false
-        y = y + 1
-    else
-        if y > 8 then
+    if state == s_playing then
+        if not btn(2) and vacant(x,y+8) and vacant(x+7,y+8) and y<16 then
             player.standing = false
+            y = y + 1
         else
-            player.standing = true
+            if y > 8 then
+                player.standing = false
+            else
+                player.standing = true
+            end
         end
-    end
-    
-    for i=1,speed do
-        if (btn(0) and vacant(x-1,y) and vacant(x-1,y+7)) x = x - 1
-        if (btn(1) and vacant(x+8,y) and vacant(x+8,y+7)) x = x + 1
-        if (btn(2) and vacant(x,y-1) and vacant(x+7,y-1)) y = y - 1
-        if (btn(3) and vacant(x,y+8) and vacant(x+7,y+8)) y = y + 1
-    end
-
-    if (btn(3)) then
-        player.base_sprite = 21
-        player.flipx = false
-        player.flipy = true
-    end
-    if (btn(2)) then
-        player.base_sprite = 21
-        player.flipx = false
-        player.flipy = false
-    end
-    if (btn(0)) then
-        player.base_sprite = 5
-        player.flipy = false            
-        player.flipx = true
-    end
-    if (btn(1)) then
-        player.base_sprite = 5
-        player.flipx = false
-        player.flipy = false
-    end
         
-    player.movement = player.x != x or player.y != y
-    player.x,player.y = x,y
+        for i=1,speed do
+            if (btn(0) and vacant(x-1,y) and vacant(x-1,y+7)) x = x - 1
+            if (btn(1) and vacant(x+8,y) and vacant(x+8,y+7)) x = x + 1
+            if (btn(2) and vacant(x,y-1) and vacant(x+7,y-1)) y = y - 1
+            if (btn(3) and vacant(x,y+8) and vacant(x+7,y+8)) y = y + 1
+        end
 
-    if player.o2 > 0 and y>16 then
-        player.o2 = player.o2 - (player.y-6)/2000
-    end
-    if player.y < 16 then
-        player.o2 = player.o2 + 2
-    end
-    if (player.o2 < 0) player.o2 = 0
-    if (player.o2 > 100) player.o2 = 100
-    
-    local closest = distance_to_flagged_tile(player.x+4, player.y+4, 1)
-    if closest then
-        if closest.dist < 24 and btn(4) then
-            mine(closest)
+        if (btn(3)) then
+            player.base_sprite = 21
+            player.flipx = false
+            player.flipy = true
+        end
+        if (btn(2)) then
+            player.base_sprite = 21
+            player.flipx = false
+            player.flipy = false
+        end
+        if (btn(0)) then
+            player.base_sprite = 5
+            player.flipy = false            
+            player.flipx = true
+        end
+        if (btn(1)) then
+            player.base_sprite = 5
+            player.flipx = false
+            player.flipy = false
+        end
+            
+        player.movement = player.x != x or player.y != y
+        player.x,player.y = x,y
+
+        if player.o2 > 0 and y>16 then
+            player.o2 = player.o2 - (player.y-6)/2000
+        end
+        if player.y < 16 then
+            player.o2 = player.o2 + 2
+        end
+        if (player.o2 < 0) player.o2 = 0
+        if (player.o2 > 100) player.o2 = 100
+        
+        local closest = distance_to_flagged_tile(player.x+4, player.y+4, 1)
+        if closest then
+            if closest.dist < 24 and btn(4) then
+                mine(closest)
+            end
+        end
+        
+        display.o2 = flr(player.o2)
+
+        --if the player is collided with tile 3 then the player is in the interior
+        if mget(flr((player.x+4)/8), flr((4+player.y)/8)) == 3 then
+            if (not disable_player_interior) state = s_interior
+        else
+            disable_player_interior = false
         end
     end
-    
-    display.o2 = flr(player.o2)
+
+    if btnp(5) and state == s_interior then
+        state=s_playing
+        disable_player_interior = true
+    end
 
 end
 
 function mine(closest)
     local t = mget(closest.x, closest.y) -- Get the tile
+
+    -- increment the amount of resources in the player inventory for the tile
+    if t == 19 or t == 35 or t == 51 then
+        player.inventory[19] = (player.inventory[3] or 0) + 1
+    elseif t == 20 then
+        player.inventory[20] = (player.inventory[4] or 0) + 1
+    elseif t == 36 then
+        player.inventory[36] = (player.inventory[5] or 0) + 1
+    end
+
     -- add particles
     add(particles, {x0=closest.x*8+4, y0=closest.y*8+4, x1=player.x, y1=player.y, t=t, action=cocreate(function(particle)
         for i=1,5 do
