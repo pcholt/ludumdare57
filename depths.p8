@@ -59,13 +59,17 @@ function _draw()
         print("\^w\^tdepths", 40, 45, 7)
         print("press 🅾️ to start", 30, 70, 7)
         if btnp(4) then
-            player.x = 100
-            player.y = 8
-            player.o2 = 100
-            player.inventory = {[19]=2, [20]=3, [36]=1, [52]=0}
-            player.equipment = {}
-            player.cash = 0
-            player.power = 100
+            reload()
+            player={
+                x=100, y=8, o2=100, n2={0,0,0,0}, flip_hor=false,
+                flip_vert=false, base_sprite=5,
+                inventory = {[19]=2, [20]=3, [36]=1, [52]=0},
+                equipment={},
+                cash=0,
+                o2=1,
+                power = 100,
+            }
+            resource_counts = {}
             state = s_playing
         end
     elseif state==s_playing then
@@ -84,13 +88,17 @@ function _draw()
         print("\^w\^tgame over", 50, 30, 7)
         print("press 🅾️ to restart", 30, 50, 7)
         if btnp(4) then
-            player.x = 100
-            player.y = 8
-            player.o2 = 100
-            player.inventory = {[19]=2, [20]=3, [36]=1, [52]=0}
-            player.equipment = {}
-            player.cash = 0
-            player.power = 100
+            reload()
+            player={
+                x=100, y=8, o2=100, n2={0,0,0,0}, flip_hor=false,
+                flip_vert=false, base_sprite=5,
+                inventory = {[19]=2, [20]=3, [36]=1, [52]=0},
+                equipment={},
+                cash=0,
+                o2=1,
+                power = 100,
+            }
+            resource_counts = {}
             state = s_playing
         end
     end
@@ -177,6 +185,7 @@ function draw_interior()
 
         -- sell
         if m and player.inventory[item] and player.inventory[item]>0 then
+            sfx(5)
             price = recipes[item].price
             player.cash += price -- Sell one item
             player.inventory[item] -= 1 -- Remove the item from the inventory
@@ -193,9 +202,13 @@ function draw_interior()
             if mode == "buy" then
                 local construction = constructions[item]
                 if player.cash >= construction.buy then
+                    sfx(6)
                     player.cash -= construction.buy
                     player.equipment[construction.name] = true
+                else
+                    sfx(8)
                 end
+                
             elseif mode == "build" then
                 local buildable = true
                 local construction = constructions[item]
@@ -203,10 +216,13 @@ function draw_interior()
                     if (not player.inventory[k] or player.inventory[k] < v) buildable = false
                 end
                 if buildable then
+                    sfx(7)
                     for k,v in pairs(construction.make) do
                         player.inventory[k] -= v
                     end
                     player.equipment[construction.name] = true
+                else
+                    sfx(8)
                 end
             end
         end
@@ -281,10 +297,14 @@ function _update()
         player.x,player.y = x,y
 
         if player.o2 > 0 and y>16 then
+            local starto2 = player.o2
             if player.equipment["tank upgrade"] then
                 player.o2 = player.o2 - (player.y-6)/2000
             else
                 player.o2 = player.o2 - (player.y-6)/500
+            end
+            if flr(player.o2/5) < flr(starto2/5) then
+                sfx(4)
             end
         end
         if player.y < 16 then
@@ -305,6 +325,7 @@ function _update()
         --if the player is collided with tile 3 then the player is in the interior
         if mget(flr((player.x+4)/8), flr((4+player.y)/8)) == 3 then
             if (not disable_player_interior) then
+                sfx(1)
                 state = s_interior
                 ui_selected = 1
             end
@@ -314,6 +335,7 @@ function _update()
     end
 
     if btnp(5) and state == s_interior then
+        sfx(2)
         state=s_playing
         disable_player_interior = true
     end
@@ -328,6 +350,7 @@ function mine(closest)
     if player.power <= 0 then
         return
     end
+    sfx(0)
     if player.equipment["power pack"] then
         player.power -= 0.2
     else
@@ -749,3 +772,13 @@ __map__
 2121212121212121212121212121212121212121212100000000000000000000000000000000002121212121212121212121212121212121212121212121212122000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002121212121212121212121212121
 2121212121212121212121212121212121212121212100000000000000000000000000000000000021212121212121212121212121212121212121212121212121123400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002121212121212121212121212121
 2121212121212121212121212121212121212121212100000000000000000000000000000000000021212121212121212121212121212121212121212121212121211234232423340000000000000000000000000000000000000000000000000000000000000000000000000000000000000021212121212121212121212121
+__sfx__
+0001000023030000000b0600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+010800001f0601c040180500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+01080000180601c0401f0500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+01080000240501f0501c0501805000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+311008000052000300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+010300001f52000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+010700000c0500e050100501305015050000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+010800000c050100500e0501505013050000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+010800000c05000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
