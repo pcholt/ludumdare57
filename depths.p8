@@ -29,6 +29,9 @@ constructions={
     {name="improved fins", buy=2000},
     {name="fish gun", buy=300, make={[19]=100, [20]=1}},
     {name="power pack", buy=1700, make={[20]=100, [52]=100}},
+    {name="storage", make={[20]=200, [36]=50}, buy=1200},
+    {name="scooter", make={[20]=300, [36]=100}, buy=2500},
+    {name="settlement", make={[19]=50, [20]=25}, buy=1500},
 }
 
 s_playing=1 s_title=2 s_interior=3 s_playing_disable_interior=4 s_gameover=5
@@ -36,7 +39,7 @@ state=s_title
 
 fraction_depth_bitmasks={
     0b0000000000000000,
-    0b0000000100000000,
+    0b0000000100000000, 
     0b0010000000001000,
     0b0001000001000010,
     0b1001001001001000,
@@ -104,8 +107,12 @@ function _draw()
     end
 end
 
+offset=0
+offset_dest=0
+
 function draw_interior()
     cls(13)
+    camera(0,offset)
     player.o2 = 100
     player.power = 100
     local i=0 c=0 m={}
@@ -123,7 +130,7 @@ function draw_interior()
     print(player.cash, 90, 7, 7)
     i+=1
 
-    r=30
+    r=50
     local button={}
     for ci,construction in pairs(constructions) do
         local purchasable = true
@@ -133,25 +140,27 @@ function draw_interior()
         else
             color=0
         end 
-        print(construction.name, 10, 20 + r, color) -- Display the item and amount
+        print(construction.name, 10, r, color) -- Display the item and amount
         if purchasable then
+            if (ui_selected == i) offset_dest=r-60
             if (ui_selected == i) color=7 else color=1
             if construction.buy then
                 if player.cash >= construction.buy and color==1 then
                     color=11
                 end
-                print("buy $"..construction.buy, 80, 20 + r, color) -- Display the item and amount
+                print("buy $"..construction.buy, 80, r, color) -- Display the item and amount
                 button[i] = {item=ci, mode="buy"}
                 r+=8
             end
             if construction.make then
                 i+=1
+                if (ui_selected == i) offset_dest=r-60
                 if (ui_selected == i) color=7 else color=1 
                 x0 = 13
                 for k,v in pairs(construction.make) do
-                    spr(k, x0, 18 + r) -- Display the item
+                    spr(k, x0, r-2) -- Display the item
                     x0 += 8
-                    x0 = print("X"..v, x0, 20 + r, 7)+4 -- Display the item and amount
+                    x0 = print("X"..v, x0, r, 7)+4 -- Display the item and amount
                 end
                 local match = true
                 for k,v in pairs(construction.make) do
@@ -162,7 +171,7 @@ function draw_interior()
                 if match and color==1 then
                     color=11
                 end
-                print("build", 80, 20 + r, color) -- Display the item and amount
+                print("build", 80, r, color) -- Display the item and amount
                 button[i] = {item=ci, mode="build"}
                 r+=8
             end
@@ -172,6 +181,8 @@ function draw_interior()
             r+=10
         end
     end
+    if (ui_selected < 4 or offset_dest<0) offset_dest=0
+    camera(0)
 
     if btnp(2) then
         ui_selected = (ui_selected - 1) % i
@@ -252,6 +263,16 @@ end
 function _update()
     local x,y = player.x, player.y
     local speed = 2
+    local dx = (offset_dest - offset)/10
+    if abs(dx) <.1 then
+        offset = offset_dest
+    else
+        if abs(dx) < 1 and dx!=0 then
+            dx=sgn(dx)
+        end
+        offset += flr(dx)
+    end
+
 
     if state == s_playing then
         if not btn(2) and vacant(x,y+8) and vacant(x+7,y+8) and y<16 then
@@ -327,6 +348,7 @@ function _update()
             if (not disable_player_interior) then
                 sfx(1)
                 state = s_interior
+                offset = 0
                 ui_selected = 1
             end
         else
