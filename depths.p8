@@ -2,7 +2,7 @@ pico-8 cartridge // http://www.pico-8.com
 version 42
 __lua__
 -- distressing depths
--- by Paul Holt
+-- by paul polt
 player={
 	x=100, y=8, o2=100, n2={0,0,0,0}, flip_hor=false,
     flip_vert=false, base_sprite=5,
