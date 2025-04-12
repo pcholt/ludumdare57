@@ -64,7 +64,6 @@ fraction_depth_bitmasks={
 
 function _draw()
     cls()
-    print(stat(0),0,0,12)
     if state==s_title then
         camera(0)
         cls(0)
@@ -85,7 +84,6 @@ function _draw()
         draw_player()
         draw_particles()
         draw_display()
-        print(stat(0),0,0,12)
     elseif state==s_interior then
         camera(0)
         draw_interior()
