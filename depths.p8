@@ -39,8 +39,7 @@ constructions={
     {name="fish gun", buy=300, make={[19]=100, [20]=1}},
     {name="power pack", buy=1700, make={[20]=100, [52]=100}},
     {name="scooter", make={[20]=99, [36]=99, [44]=1}, buy=2500},
---    {name="escape ship", make={[60]=50, [44]=25, [28]=20}, buy=30500},
-    {name="escape ship", make={[20]=1}, buy=30500},
+    {name="escape ship", make={[60]=50, [44]=25, [28]=20}, buy=30500},
 }
 
 s_playing=1 s_title=2 s_interior=3 s_playing_disable_interior=4 s_gameover=5 s_win_game=6
@@ -168,8 +167,8 @@ function credits()
     print("press 🅾️ to restart", 0, 80,15)
 
     print("all work created by paul holt",0, 100, 7)
-    print("music by the amazing", 0, 110, 7)
-    print("paul holt", 0, 120, 7)
+    print("music by paul and the amazing", 0, 110, 7)
+    print("@gruber_music", 0, 120, 7)
 
     print("press 🅾️ to return to the depths",0,150,14)
 
