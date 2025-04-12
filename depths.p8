@@ -5,6 +5,7 @@ __lua__
 -- by paul holt
 function new_player()
     win_coroutine = nil
+    start_time = t()
     return {
         x=100, y=8, o2=100, n2={0,0,0,0}, flip_hor=false,
         flip_vert=false, base_sprite=5,
@@ -74,8 +75,6 @@ function _draw()
             resource_counts = {}
             state = s_playing
 
-            player.x=10
-            state = s_win_game
         end
     elseif state==s_playing then
         draw_borders()
@@ -107,26 +106,111 @@ function _draw()
 end
 
 function win_game() 
+    time = t()-start_time
     mset(1,0,0) mset(1,1,0) mset(2,0,0) mset(2,1,0)
-    for i=0,100 do
+
+    a=0
+    while a<100 do
         cls(0)
+        if (a>60) fade(a-60)
         draw_borders()
         draw_depth_overlay()
         map()
+        spr(66, 8,-a, 2,2)
+        spr(98+rnd(3), 12,-a+16)
+        yield()
+        a+=1
+    end
+
+    fillp()
+    pal()
+
+    for a=0, 600 do
+        camera(0,0)
+        cls(0)
+        if (a<32) fade(16-a/2)
+        if (a>500) fade((a-500)*32/100)
+        radius = 600/(a+600.0)
+        circfill(12, radius*100+100, radius*200, 12)
+        spr(68, 8,64-a/8, 1,1)
+        spr(98+rnd(3), 8,64-a/8+8)
         yield()
     end
 
+    pal()
+    local y
     while true do
-        print("you win!", 50+rnd(10), 30+rnd(10), 7)
-        yield()
+        for y=-127, 200 do
+            camera(0, y)
+            credits()
+            yield()
+            if btnp(4) then
+                reload()
+                player= new_player()
+                resource_counts = {}
+                state = s_playing
+            end
+        end
     end
+
+
 end
 
+function credits()
+    print("\^t\^wescaped", 0, 20, 7)
+
+    print("you escaped from the depths",0, 40, 7)
+    print("with a total of "..player.cash.." dollars",0, 50, 7)
+    print("in "..time.." seconds",0, 60, 7)
+
+    print("press 🅾️ to restart", 0, 80,15)
+
+    print("all work created by paul holt",0, 100, 7)
+    print("music by the amazing", 0, 110, 7)
+    print("paul holt", 0, 120, 7)
+
+    print("press 🅾️ to return to the depths",0,150,14)
+
+end
+
+
+local fadetable={
+    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+    {1,1,1,1,1,1,1,0,0,0,0,0,0,0,0},
+    {2,2,2,2,2,2,1,1,1,0,0,0,0,0,0},
+    {3,3,3,3,3,3,1,1,1,0,0,0,0,0,0},
+    {4,4,4,2,2,2,2,2,1,1,0,0,0,0,0},
+    {5,5,5,5,5,1,1,1,1,1,0,0,0,0,0},
+    {6,6,13,13,13,13,5,5,5,5,1,1,1,0,0},
+    {7,6,6,6,6,13,13,13,5,5,5,1,1,0,0},
+    {8,8,8,8,2,2,2,2,2,2,0,0,0,0,0},
+    {9,9,9,4,4,4,4,4,4,5,5,0,0,0,0},
+    {10,10,9,9,9,4,4,4,5,5,5,5,0,0,0},
+    {11,11,11,3,3,3,3,3,3,3,0,0,0,0,0},
+    {12,12,12,12,12,3,3,1,1,1,1,1,1,0,0},
+    {13,13,13,5,5,5,5,1,1,1,1,1,0,0,0},
+    {14,14,14,13,4,4,2,2,2,2,2,1,1,0,0},
+    {15,15,6,13,13,13,5,5,5,5,5,1,1,0,0}
+   }
+
+function fade(i)
+ for c=0,15 do
+  if flr(i+1)>=16 then
+   pal(c,0)
+  else
+   pal(c,fadetable[c+1][flr(i+1)])
+  end
+ end
+end
+
+   
 offset=0
 offset_dest=0
 
 function draw_interior()
     cls(13)
+    camera(0,0)
+    print(flr(t()-start_time),100,0,5)
     camera(0,offset)
     player.o2 = 100
     player.power = 100
