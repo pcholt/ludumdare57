@@ -40,7 +40,6 @@ constructions={
     {name="power pack", buy=1700, make={[20]=100, [52]=100}},
     {name="scooter", make={[20]=99, [36]=99, [44]=1}, buy=2500},
     {name="escape ship", make={[60]=50, [44]=25, [28]=20}, buy=30500},
---    {name="escape ship", make={[20]=1}, buy=30500},
 }
 
 s_playing=1 s_title=2 s_interior=3 s_playing_disable_interior=4 s_gameover=5 s_win_game=6
@@ -75,7 +74,6 @@ function _draw()
             player= new_player()
             resource_counts = {}
             state = s_playing
-
         end
     elseif state==s_playing then
         draw_borders()
@@ -167,11 +165,13 @@ function credits()
 
     print("press 🅾️ to restart", 0, 80,15)
 
-    print("all work created by paul holt",0, 100, 7)
-    print("music by the amazing", 0, 110, 7)
-    print("paul holt", 0, 120, 7)
+    print("music by        paul holt",0, 100, 7)
+    print("programming by  paul holt",0, 110, 7)
+    print("artwork by      paul holt",0, 120, 7)
+    print("play testing by paul holt",0, 130, 7)
+    print("                and harry",0, 140, 7)
 
-    print("press 🅾️ to return to the depths",0,150,14)
+    print("press 🅾️ to return to the depths",0,170,14)
 
 end
 
